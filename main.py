@@ -25,13 +25,16 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 
 
 class Pokemon:
-    def __init__(self, name, hp, attack, defense, moves):
+    def __init__(self, name, type, skills, hp, speed):
         self.name = name
         self.hp = hp
         self.max_hp = hp  # 최대 HP를 저장
-        self.attack = attack
-        self.defense = defense
-        self.moves = moves
+        self.type = type
+        self.skills = skills
+        self.speed = speed
+        self.is_hidden = False  # For '껍질에 숨기'
+        self.is_sleeping = False  # For '잠자기'
+        self.is_yawned = False  # For '하품'
 
     def take_damage(self, damage):
         self.hp -= damage
@@ -44,6 +47,42 @@ class Pokemon:
             damage = 0
         target.take_damage(damage)
         return damage
+
+    def get_skill_power(self, skill_name, opponent_speed):
+        for skill in self.skills:
+            if skill['name'] == skill_name:
+                if skill_name == '일렉트릭볼':
+                    power = (self.speed - opponent_speed)
+                    return max(0, power)  # Ensure power is not negative
+                else:
+                    return skill['power']
+        return None
+
+    def apply_special_conditions(self, skill_name):
+        if skill_name == '껍질에 숨기':
+            self.is_hidden = True
+        elif skill_name == '잠자기':
+            self.is_sleeping = True
+        elif skill_name == '하품':
+            self.is_yawned = True
+
+    def reset_special_conditions(self):
+        self.is_hidden = False
+        self.is_sleeping = False
+        self.is_yawned = False
+
+    def should_attack_hit(self, skill):
+        # Check '껍질에 숨기' condition
+        if self.is_hidden and skill['accuracy'] <= 0.6:
+            return False
+        # Check '잠자기' condition
+        if self.is_sleeping and skill['power'] <= 12:
+            return False
+        # Check '하품' condition
+        if self.is_yawned and random.random() >= 0.5:
+            return False
+        return True
+
 
 
 # 포켓몬 예제 생성
